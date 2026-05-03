@@ -1,0 +1,149 @@
+.authLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+/* Left panel */
+.authLeft {
+  background: linear-gradient(135deg, #0f0f18 0%, #12101e 50%, #0c0c14 100%);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border-right: 1.5px solid var(--border);
+}
+
+.authLeft::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 60% at 30% 40%, rgba(124, 106, 247, 0.12), transparent);
+  pointer-events: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.brandIcon {
+  font-size: 24px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.brandName {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.heroText {
+  margin-top: auto;
+  margin-bottom: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.heroText h1 {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 4vw, 54px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.heroText p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 320px;
+}
+
+/* Decorative grid */
+.decorGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  width: 160px;
+  opacity: 0.4;
+}
+
+.decorCell {
+  height: 36px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(124, 106, 247, 0.15);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+/* Right panel */
+.authRight {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: var(--bg);
+}
+
+.authCard {
+  width: 100%;
+  max-width: 400px;
+  animation: fadeIn 0.4s ease;
+}
+
+.authCardHeader {
+  margin-bottom: 32px;
+}
+
+.authCardHeader h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.authCardHeader p {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.switchLink {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.switchLink a {
+  color: var(--accent);
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.switchLink a:hover { opacity: 0.8; }
+
+@media (max-width: 768px) {
+  .authLayout { grid-template-columns: 1fr; }
+  .authLeft { display: none; }
+}

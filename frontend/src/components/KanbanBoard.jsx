@@ -1,0 +1,143 @@
+import { useState, useMemo } from 'react'
+import {
+  DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
+  closestCorners, useDroppable
+} from '@dnd-kit/core'
+import {
+  SortableContext, verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import toast from 'react-hot-toast'
+import TaskCard from './TaskCard'
+import styles from './KanbanBoard.module.css'
+
+const COLUMNS = [
+  { id: 'todo',        label: 'To Do',       emoji: '📋', color: '#8888aa' },
+  { id: 'in_progress', label: 'In Progress',  emoji: '⚡', color: '#7c6af7' },
+  { id: 'done',        label: 'Done',         emoji: '✅', color: '#34d399' },
+]
+
+// Normalize status value from backend to column id
+function normalizeStatus(status) {
+  if (!status) return 'todo'
+  const s = status.toLowerCase().replace(/[\s-]/g, '_')
+  if (s === 'in_progress' || s === 'inprogress') return 'in_progress'
+  if (s === 'done' || s === 'completed') return 'done'
+  return 'todo'
+}
+
+export default function KanbanBoard({ tasks, onStatusChange, onDelete, onEdit, isAdmin }) {
+  const [activeTask, setActiveTask] = useState(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  )
+
+  // Group tasks by status
+  const grouped = useMemo(() => {
+    const map = { todo: [], in_progress: [], done: [] }
+    for (const t of tasks) {
+      const col = normalizeStatus(t.status)
+      map[col].push(t)
+    }
+    return map
+  }, [tasks])
+
+  const findColumn = (taskId) => {
+    const stringTaskId = String(taskId)
+    for (const col of COLUMNS) {
+      if (grouped[col.id].some(t => String(t.id) === stringTaskId)) return col.id
+    }
+    return null
+  }
+
+  const handleDragStart = ({ active }) => {
+    const task = tasks.find(t => String(t.id) === String(active.id))
+    setActiveTask(task || null)
+  }
+
+  const handleDragEnd = ({ active, over }) => {
+    setActiveTask(null)
+    if (!over) return
+    const fromCol = findColumn(active.id)
+    if (fromCol === 'done') {
+      return toast.error('Cannot revert a completed task')
+    }
+    // over.id could be a column id or a task id
+    const toCol = COLUMNS.some(c => c.id === over.id)
+      ? over.id
+      : findColumn(over.id)
+    if (!toCol || fromCol === toCol) return
+    onStatusChange(active.id, toCol)
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className={styles.board}>
+        {COLUMNS.map(col => {
+          const colTasks = grouped[col.id]
+          return (
+            <KanbanColumn
+              key={col.id}
+              column={col}
+              tasks={colTasks}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              isAdmin={isAdmin}
+            />
+          )
+        })}
+      </div>
+
+      <DragOverlay>
+        {activeTask ? (
+          <div style={{ transform: 'rotate(2deg)', opacity: 0.9 }}>
+            <TaskCard task={activeTask} isAdmin={false} />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  )
+}
+
+function KanbanColumn({ column, tasks, onDelete, onEdit, isAdmin }) {
+  const { setNodeRef } = useDroppable({ id: column.id })
+
+  return (
+    <div className={styles.column} ref={setNodeRef}>
+      <div className={styles.columnHeader}>
+        <div className={styles.columnLabel}>
+          <span className={styles.columnEmoji}>{column.emoji}</span>
+          <span className={styles.columnTitle}>{column.label}</span>
+        </div>
+        <span className={styles.columnCount} style={{ '--col-color': column.color }}>
+          {tasks.length}
+        </span>
+      </div>
+
+      <SortableContext items={tasks.map(t => String(t.id))} strategy={verticalListSortingStrategy}>
+        <div className={styles.columnBody} data-column-id={column.id}>
+          {tasks.length === 0 ? (
+            <div className={styles.emptyColumn}>
+              <span>Drop tasks here</span>
+            </div>
+          ) : (
+            tasks.map(task => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onDelete={onDelete}
+                onEdit={onEdit}
+                isAdmin={isAdmin}
+              />
+            ))
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  )
+}

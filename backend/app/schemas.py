@@ -12,15 +12,9 @@ class Login(BaseModel):
 class ProjectCreate(BaseModel):
       name: str
 
-class TaskCreate(BaseModel):
-      title: str
-      description: str
-      due_date: str
-      priority: str
-      project_id: str
 
 class AddMember(BaseModel):
-      user_id: int
+      email: str
       role: str
 
 class TaskCreate(BaseModel):
@@ -29,7 +23,12 @@ class TaskCreate(BaseModel):
       due_date: str
       priority: str
       project_id: int
-      assigned_to: int
+      assigned_to_email: str = None
 
 class TaskUpdate(BaseModel):
-      status: str
+      status: str = None
+      title: str = None
+      description: str = None
+      due_date: str = None
+      priority: str = None
+      assigned_to_email: str = None

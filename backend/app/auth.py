@@ -7,10 +7,10 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 
-pwd_context = CryptContext(schemes=["bcrypt"])
+pwd_context = CryptContext(schemes=["argon2"])
 
 def hash_password(password):
-      return pwd_context.hash(password[:72])
+      return pwd_context.hash(password)
 
 def verify_password(plain, hashed):
       return pwd_context.verify(plain, hashed)

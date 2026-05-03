@@ -32,4 +32,11 @@ def login(user: schemas.Login, db: Session = Depends(get_db)):
             raise HTTPException(status_code= 400, detail= "Invalid credentials")
       
       token = auth.create_token({"user_id" : db_user.id})
-      return {"access_token" : token}
+      return {
+            "access_token" : token,
+            "user": {
+                  "id": db_user.id,
+                  "email": db_user.email,
+                  "name": db_user.name
+            }
+      }
