@@ -411,12 +411,8 @@ export default function ProjectPage() {
     }
   }
 
-  const handleTaskSaved = (savedTask, isEdit) => {
-    if (isEdit) {
-      setTasks(prev => prev.map(t => t.id === savedTask.id ? savedTask : t))
-    } else {
-      setTasks(prev => [...prev, savedTask])
-    }
+  const handleTaskSaved = () => {
+    loadData()
     setShowTaskModal(false)
     setEditTask(null)
   }
