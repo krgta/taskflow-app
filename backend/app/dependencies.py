@@ -4,6 +4,8 @@ from jose import jwt
 from .database import SessionLocal
 from .models import User
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 security = HTTPBearer()
 

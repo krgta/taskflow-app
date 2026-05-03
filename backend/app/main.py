@@ -1,10 +1,9 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from .database import engine
 from .routers import auth, projects, tasks, dashboard
 from fastapi.middleware.cors import CORSMiddleware
 from . import models
-from dotenv import load_dotenv
-load_dotenv()
 
 models.Base.metadata.create_all(bind = engine)
 
