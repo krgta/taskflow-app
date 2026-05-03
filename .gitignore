@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.env
+myvenv
+
+# Node
+node_modules/
+dist/
+
+# Vite
+.vite/
+
+# OS
+.DS_Store
