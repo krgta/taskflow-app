@@ -10,11 +10,6 @@ models.Base.metadata.create_all(bind = engine)
 
 app = FastAPI()
 
-app.include_router(auth.router)
-app.include_router(projects.router)
-app.include_router(tasks.router)
-app.include_router(dashboard.router)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -26,6 +21,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
+app.include_router(projects.router)
+app.include_router(tasks.router)
+app.include_router(dashboard.router)
 
 @app.get("/")
 def home():
