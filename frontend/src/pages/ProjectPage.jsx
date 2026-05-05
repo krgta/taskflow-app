@@ -97,11 +97,17 @@ function TaskModal({ task, projectId, projectName, onClose, onSaved, isAdmin }) 
     priority: 'Medium', assigned_to_email: '', status: 'todo',
   })
 
-  const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const [assignEmailError, setAssignEmailError] = useState('')
+  const handleChange = (e) => {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+    if (e.target.name === 'assigned_to_email') setAssignEmailError('')
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) return toast.error('Title is required')
+    if (!form.due_date) return toast.error('Due date is required')
+    setAssignEmailError('')
     setLoading(true)
     try {
       let res
@@ -114,7 +120,13 @@ function TaskModal({ task, projectId, projectName, onClose, onSaved, isAdmin }) 
       }
       onSaved(res.data, !!task)
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Something went wrong')
+      const detail = err.response?.data?.detail || 'Something went wrong'
+      // Show user-not-found error inline on the email field
+      if (detail.toLowerCase().includes('email') || detail.toLowerCase().includes('user')) {
+        setAssignEmailError(detail)
+      } else {
+        toast.error(detail)
+      }
     } finally {
       setLoading(false)
     }
@@ -166,7 +178,13 @@ function TaskModal({ task, projectId, projectName, onClose, onSaved, isAdmin }) 
             <div className="form-group">
               <label className="form-label">Assign To (email)</label>
               <input className="form-input" type="email" name="assigned_to_email"
-                placeholder="User Email" value={form.assigned_to_email} onChange={handleChange} />
+                placeholder="User Email" value={form.assigned_to_email} onChange={handleChange}
+                style={assignEmailError ? { borderColor: 'var(--danger)' } : undefined} />
+              {assignEmailError && (
+                <span style={{ fontSize: 12, color: 'var(--danger)', marginTop: 2 }}>
+                  ⚠ {assignEmailError}
+                </span>
+              )}
             </div>
           </div>
           <div className="modal-footer">

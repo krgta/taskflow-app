@@ -16,23 +16,29 @@ const COLUMNS = [
   { id: 'done',        label: 'Done',         emoji: '✅', color: '#34d399' },
 ]
 
-// Normalize status value from backend to column id
+// Backend stores exactly: "To do", "In Progress", "Done"
 function normalizeStatus(status) {
   if (!status) return 'todo'
-  const s = status.toLowerCase().replace(/[\s-]/g, '_')
-  if (s === 'in_progress' || s === 'inprogress') return 'in_progress'
+  const s = status.toLowerCase().trim()
+  if (s === 'in progress' || s === 'in_progress') return 'in_progress'
   if (s === 'done' || s === 'completed') return 'done'
   return 'todo'
+}
+
+// Map column id to exact backend status string
+export function columnToStatus(colId) {
+  if (colId === 'in_progress') return 'In Progress'
+  if (colId === 'done') return 'Done'
+  return 'To do'
 }
 
 export default function KanbanBoard({ tasks, onStatusChange, onDelete, onEdit, isAdmin }) {
   const [activeTask, setActiveTask] = useState(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
 
-  // Group tasks by status
   const grouped = useMemo(() => {
     const map = { todo: [], in_progress: [], done: [] }
     for (const t of tasks) {
@@ -42,10 +48,10 @@ export default function KanbanBoard({ tasks, onStatusChange, onDelete, onEdit, i
     return map
   }, [tasks])
 
-  const findColumn = (taskId) => {
-    const stringTaskId = String(taskId)
+  const findColumn = (id) => {
+    const sid = String(id)
     for (const col of COLUMNS) {
-      if (grouped[col.id].some(t => String(t.id) === stringTaskId)) return col.id
+      if (grouped[col.id].some(t => String(t.id) === sid)) return col.id
     }
     return null
   }
@@ -58,16 +64,19 @@ export default function KanbanBoard({ tasks, onStatusChange, onDelete, onEdit, i
   const handleDragEnd = ({ active, over }) => {
     setActiveTask(null)
     if (!over) return
+
     const fromCol = findColumn(active.id)
+    const isColId = COLUMNS.some(c => c.id === String(over.id))
+    const toCol = isColId ? String(over.id) : findColumn(over.id)
+
+    if (!toCol || !fromCol || fromCol === toCol) return
+
     if (fromCol === 'done') {
-      return toast.error('Cannot revert a completed task')
+      toast.error('Cannot move a completed task')
+      return
     }
-    // over.id could be a column id or a task id
-    const toCol = COLUMNS.some(c => c.id === over.id)
-      ? over.id
-      : findColumn(over.id)
-    if (!toCol || fromCol === toCol) return
-    onStatusChange(active.id, toCol)
+
+    onStatusChange(active.id, columnToStatus(toCol))
   }
 
   return (
@@ -78,24 +87,21 @@ export default function KanbanBoard({ tasks, onStatusChange, onDelete, onEdit, i
       onDragEnd={handleDragEnd}
     >
       <div className={styles.board}>
-        {COLUMNS.map(col => {
-          const colTasks = grouped[col.id]
-          return (
-            <KanbanColumn
-              key={col.id}
-              column={col}
-              tasks={colTasks}
-              onDelete={onDelete}
-              onEdit={onEdit}
-              isAdmin={isAdmin}
-            />
-          )
-        })}
+        {COLUMNS.map(col => (
+          <KanbanColumn
+            key={col.id}
+            column={col}
+            tasks={grouped[col.id]}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            isAdmin={isAdmin}
+          />
+        ))}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={{ duration: 200 }}>
         {activeTask ? (
-          <div style={{ transform: 'rotate(2deg)', opacity: 0.9 }}>
+          <div style={{ transform: 'rotate(2deg)', opacity: 0.92, pointerEvents: 'none' }}>
             <TaskCard task={activeTask} isAdmin={false} />
           </div>
         ) : null}
@@ -105,10 +111,10 @@ export default function KanbanBoard({ tasks, onStatusChange, onDelete, onEdit, i
 }
 
 function KanbanColumn({ column, tasks, onDelete, onEdit, isAdmin }) {
-  const { setNodeRef } = useDroppable({ id: column.id })
+  const { setNodeRef, isOver } = useDroppable({ id: column.id })
 
   return (
-    <div className={styles.column} ref={setNodeRef}>
+    <div className={styles.column}>
       <div className={styles.columnHeader}>
         <div className={styles.columnLabel}>
           <span className={styles.columnEmoji}>{column.emoji}</span>
@@ -119,10 +125,18 @@ function KanbanColumn({ column, tasks, onDelete, onEdit, isAdmin }) {
         </span>
       </div>
 
-      <SortableContext items={tasks.map(t => String(t.id))} strategy={verticalListSortingStrategy}>
-        <div className={styles.columnBody} data-column-id={column.id}>
+      <SortableContext
+        items={tasks.map(t => String(t.id))}
+        strategy={verticalListSortingStrategy}
+      >
+        <div
+          ref={setNodeRef}
+          className={styles.columnBody}
+          data-column-id={column.id}
+          style={isOver ? { background: 'var(--accent-soft)', borderRadius: 8 } : undefined}
+        >
           {tasks.length === 0 ? (
-            <div className={styles.emptyColumn}>
+            <div className={`${styles.emptyColumn} ${isOver ? styles.emptyOver : ''}`}>
               <span>Drop tasks here</span>
             </div>
           ) : (
