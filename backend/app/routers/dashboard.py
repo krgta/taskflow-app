@@ -7,12 +7,47 @@ from ..dependencies import get_db, get_current_user
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
+# @router.get("/user/me")
+# def get_user_dashboard(db: Session = Depends(get_db), user=Depends(get_current_user)):
+#     # Projects created by the user
+#     created_projects = db.query(models.Project).filter(models.Project.created_by == user.id).all()
+    
+#     # Projects assigned to the user (member of, but did not create)
+#     assigned_projects = db.query(models.Project).join(
+#         models.ProjectMember, models.Project.id == models.ProjectMember.project_id
+#     ).filter(
+#         models.ProjectMember.user_id == user.id,
+#         models.Project.created_by != user.id
+#     ).all()
+
+#     # Tasks assigned to the user
+#     tasks = db.query(models.Task, models.Project.name.label("project_name")).join(
+#         models.Project, models.Task.project_id == models.Project.id
+#     ).filter(models.Task.assigned_to == user.id).all()
+
+#     tasks_data = [
+#         {
+#             "id": t.Task.id,
+#             "title": t.Task.title,
+#             "description": t.Task.description,
+#             "due_date": t.Task.due_date,
+#             "priority": t.Task.priority,
+#             "status": t.Task.status,
+#             "project_id": t.Task.project_id,
+#             "project_name": t.project_name
+#         } for t in tasks
+#     ]
+
+#     return {
+#         "created_projects": created_projects,
+#         "assigned_projects": assigned_projects,
+#         "tasks": tasks_data
+#     }
+
 @router.get("/user/me")
 def get_user_dashboard(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    # Projects created by the user
     created_projects = db.query(models.Project).filter(models.Project.created_by == user.id).all()
     
-    # Projects assigned to the user (member of, but did not create)
     assigned_projects = db.query(models.Project).join(
         models.ProjectMember, models.Project.id == models.ProjectMember.project_id
     ).filter(
@@ -20,7 +55,6 @@ def get_user_dashboard(db: Session = Depends(get_db), user=Depends(get_current_u
         models.Project.created_by != user.id
     ).all()
 
-    # Tasks assigned to the user
     tasks = db.query(models.Task, models.Project.name.label("project_name")).join(
         models.Project, models.Task.project_id == models.Project.id
     ).filter(models.Task.assigned_to == user.id).all()
@@ -30,7 +64,7 @@ def get_user_dashboard(db: Session = Depends(get_db), user=Depends(get_current_u
             "id": t.Task.id,
             "title": t.Task.title,
             "description": t.Task.description,
-            "due_date": t.Task.due_date,
+            "due_date": str(t.Task.due_date) if t.Task.due_date else None,
             "priority": t.Task.priority,
             "status": t.Task.status,
             "project_id": t.Task.project_id,
@@ -38,9 +72,16 @@ def get_user_dashboard(db: Session = Depends(get_db), user=Depends(get_current_u
         } for t in tasks
     ]
 
+    # ✅ Serialize projects to dicts — fixes the undefined crash
     return {
-        "created_projects": created_projects,
-        "assigned_projects": assigned_projects,
+        "created_projects": [
+            {"id": p.id, "name": p.name, "created_by": p.created_by}
+            for p in created_projects
+        ],
+        "assigned_projects": [
+            {"id": p.id, "name": p.name, "created_by": p.created_by}
+            for p in assigned_projects
+        ],
         "tasks": tasks_data
     }
 
