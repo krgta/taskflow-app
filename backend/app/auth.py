@@ -1,5 +1,6 @@
 from passlib.context import CryptContext
 from jose import jwt
+from datetime import datetime, timedelta
 import os
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -14,4 +15,6 @@ def verify_password(plain, hashed):
       return pwd_context.verify(plain, hashed)
 
 def create_token(data: dict):
-      return jwt.encode(data, SECRET_KEY, algorithm= ALGORITHM)
+       to_encode = data.copy()
+       to_encode["exp"] = datetime.utcnow() + timedelta(days=7)
+       return jwt.encode(to_encode, SECRET_KEY, algorithm= ALGORITHM)
